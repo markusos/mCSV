@@ -10,6 +10,6 @@ Example
 
 CSVParser csvParser = new CSVParser();
 csvParser.parse(new File("input.csv"));
-List<List<String>> data = parser.getData();
+List<List<String>> data = csvParser.getData();
 
 ```
