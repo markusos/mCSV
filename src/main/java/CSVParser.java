@@ -50,7 +50,10 @@ public class CSVParser {
 
         char nextChar = (char) d;
         if (nextChar == NEW_LINE) {
-            if (!currentState.equals(State.STRING)) {
+            if (currentState.equals(State.STRING)) {
+                token.append('\n');
+            }
+            else {
                 addTokenToRow();
                 addRowToData();
                 currentState = State.PRE;
