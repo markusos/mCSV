@@ -5,7 +5,7 @@ import java.util.List;
 
 public class CSVParser {
 
-    private boolean debug = false;
+    private static final boolean debug = false;
 
     private enum State {PRE, TOKEN, STRING, POST}
 
@@ -14,14 +14,9 @@ public class CSVParser {
     private List<List<String>> data;
     private List<String> row;
 
-    private static final int EOF = -1;
-    private static final char NEW_LINE = '\n';
-    private static final char COMMA = ',';
-    private static final char DQUOTE = '\"';
 
     public CSVParser() throws IllegalFormatException, IOException {
         this.data = new ArrayList<List<String>>();
-        ;
     }
 
     public List<List<String>> getData() {
@@ -36,33 +31,22 @@ public class CSVParser {
 
         InputStream in = new FileInputStream(file);
         Reader reader = new BufferedReader(new InputStreamReader(in, Charset.defaultCharset()));
-        while (parse(reader.read())) ;
+        while (parseNextCharacter(reader.read())) ;
     }
 
-    private boolean parse(int d) throws IllegalFormatException {
-        if (d == EOF) {
+    private boolean parseNextCharacter(int d) throws IllegalFormatException {
+        Character nextChar = new Character(d);
+
+        if (nextChar.isEOF()) {
             addTokenToRow();
             addRowToData();
             debug("---EOF---");
             debug(data.toString());
             return false;
-        }
-
-        char nextChar = (char) d;
-        if (nextChar == NEW_LINE) {
-            if (currentState.equals(State.STRING)) {
-                token.append('\n');
-            }
-            else {
-                addTokenToRow();
-                addRowToData();
-                currentState = State.PRE;
-            }
-            debug("---EOL---");
         } else {
             nextState(nextChar);
+            return true;
         }
-        return true;
     }
 
     private void nextState(Character nextChar) throws IllegalFormatException {
@@ -92,10 +76,15 @@ public class CSVParser {
         }
     }
 
-    private void statePre(char nextChar) {
-        if (nextChar == COMMA) {
+    private void statePre(Character nextChar) {
+        if (nextChar.isNewLine()) {
             addTokenToRow();
-        } else if (nextChar == DQUOTE) {
+            addRowToData();
+            currentState = State.PRE;
+            debug("---EOL---");
+        } else if (nextChar.isComma()) {
+            addTokenToRow();
+        } else if (nextChar.isQuote()) {
             currentState = State.STRING;
         } else {
             token.append(nextChar);
@@ -103,33 +92,43 @@ public class CSVParser {
         }
     }
 
-    private void statePost(char nextChar) throws IllegalFormatException {
-        if (nextChar == DQUOTE) {
-            token.append(DQUOTE);
-            currentState = State.STRING;
-        } else if (nextChar == COMMA) {
+    private void statePost(Character nextChar) throws IllegalFormatException {
+        if (nextChar.isNewLine()) {
+            addTokenToRow();
+            addRowToData();
+            currentState = State.PRE;
+            debug("---EOL---");
+        } else if (nextChar.isComma()) {
             addTokenToRow();
             currentState = State.PRE;
-        } else {
+        } else if (nextChar.isQuote()) {
+            token.append(nextChar);
+            currentState = State.STRING;
+        }  else {
             throw new IllegalFormatException(String.format("Expected char ',' or '\"', but found '%s'.", nextChar));
         }
     }
 
-    private void stateString(char nextChar) {
-        if (nextChar == DQUOTE) {
+    private void stateString(Character nextChar) {
+        if (nextChar.isQuote()) {
             currentState = State.POST;
         } else {
             token.append(nextChar);
         }
     }
 
-    private void stateToken(char nextChar) throws IllegalFormatException {
-        if (nextChar == DQUOTE) {
-            throw new IllegalFormatException(String.format("Expected char but found '%s'.", nextChar));
-        } else if (nextChar == COMMA) {
+    private void stateToken(Character nextChar) throws IllegalFormatException {
+        if (nextChar.isNewLine()) {
+            addTokenToRow();
+            addRowToData();
+            currentState = State.PRE;
+            debug("---EOL---");
+        } else if (nextChar.isComma()) {
             addTokenToRow();
             currentState = State.PRE;
-        } else {
+        } else if (nextChar.isQuote()) {
+            throw new IllegalFormatException(String.format("Expected char but found '%s'.", nextChar));
+        }  else {
             token.append(nextChar);
         }
     }
