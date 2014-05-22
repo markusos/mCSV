@@ -1,7 +1,5 @@
 import java.io.*;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
 
 public class CSVParser {
 
@@ -11,22 +9,24 @@ public class CSVParser {
 
     private State currentState;
     private StringBuilder token;
-    private List<List<String>> data;
-    private List<String> row;
+    private CSVData data;
+    private CSVRecord record;
 
 
     public CSVParser() throws IllegalFormatException, IOException {
-        this.data = new ArrayList<List<String>>();
+        this.data = new CSVData();
     }
 
-    public List<List<String>> getData() {
+    public CSVData getData() {
         return data;
     }
 
     public void parse(File file) throws IOException, IllegalFormatException {
 
+        this.data = new CSVData();
+
         this.currentState = State.PRE;
-        row = new ArrayList<String>();
+        record = new CSVRecord();
         token = new StringBuilder();
 
         InputStream in = new FileInputStream(file);
@@ -35,11 +35,12 @@ public class CSVParser {
     }
 
     private boolean parseNextCharacter(int d) throws IllegalFormatException {
-        Character nextChar = new Character(d);
+        CSVCharacter nextChar = new CSVCharacter(d);
 
         if (nextChar.isEOF()) {
             addTokenToRow();
             addRowToData();
+            data.setHeaders();
             debug("---EOF---");
             debug(data.toString());
             return false;
@@ -49,7 +50,7 @@ public class CSVParser {
         }
     }
 
-    private void nextState(Character nextChar) throws IllegalFormatException {
+    private void nextState(CSVCharacter nextChar) throws IllegalFormatException {
         switch (currentState) {
             case PRE:
                 debug("PRE: " + nextChar);
@@ -76,7 +77,7 @@ public class CSVParser {
         }
     }
 
-    private void statePre(Character nextChar) {
+    private void statePre(CSVCharacter nextChar) {
         if (nextChar.isNewLine()) {
             addTokenToRow();
             addRowToData();
@@ -92,7 +93,7 @@ public class CSVParser {
         }
     }
 
-    private void statePost(Character nextChar) throws IllegalFormatException {
+    private void statePost(CSVCharacter nextChar) throws IllegalFormatException {
         if (nextChar.isNewLine()) {
             addTokenToRow();
             addRowToData();
@@ -109,7 +110,7 @@ public class CSVParser {
         }
     }
 
-    private void stateString(Character nextChar) {
+    private void stateString(CSVCharacter nextChar) {
         if (nextChar.isQuote()) {
             currentState = State.POST;
         } else {
@@ -117,7 +118,7 @@ public class CSVParser {
         }
     }
 
-    private void stateToken(Character nextChar) throws IllegalFormatException {
+    private void stateToken(CSVCharacter nextChar) throws IllegalFormatException {
         if (nextChar.isNewLine()) {
             addTokenToRow();
             addRowToData();
@@ -135,14 +136,14 @@ public class CSVParser {
 
     private void addTokenToRow() {
         debug(String.format("Token added: '%s'", token.toString()));
-        row.add(token.toString());
+        record.add(token.toString());
         token = new StringBuilder();
     }
 
     private void addRowToData() {
-        debug(String.format("Row added: '%s'", row.toString()));
-        data.add(row);
-        row = new ArrayList<String>();
+        debug(String.format("Row added: '%s'", record.toString()));
+        data.add(record);
+        record = new CSVRecord();
     }
 
     private void debug(String s) {
