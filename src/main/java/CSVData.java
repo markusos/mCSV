@@ -1,4 +1,8 @@
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 public class CSVData implements Iterable<CSVRecord> {
 
@@ -11,6 +15,10 @@ public class CSVData implements Iterable<CSVRecord> {
     @Override
     public Iterator<CSVRecord> iterator() {
         return data.iterator();
+    }
+
+    public int size() {
+        return data.size();
     }
 
     public boolean add(CSVRecord r) {
@@ -36,7 +44,28 @@ public class CSVData implements Iterable<CSVRecord> {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        CSVData that = (CSVData) o;
+
+        if (data != null ? !data.equals(that.data) : that.data != null) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return data != null ? data.hashCode() : 0;
+    }
+
+    @Override
     public String toString() {
+        return toDebugString();
+    }
+
+    public String toDebugString() {
         return "CSVData{" +
                 "data=" + data +
                 '}';

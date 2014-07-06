@@ -1,44 +1,44 @@
-import java.io.*;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.Charset;
 
 public class CSVParser {
 
     private static final boolean debug = false;
 
-    private enum State {PRE, TOKEN, STRING, POST}
+    private enum State {PRE, FIELD, ESCAPED_FIELD, POST}
 
     private State currentState;
-    private StringBuilder token;
+    private StringBuilder field;
     private CSVData data;
     private CSVRecord record;
 
-
-    public CSVParser() throws IllegalFormatException, IOException {
-        this.data = new CSVData();
-    }
-
-    public CSVData getData() {
-        return data;
-    }
-
-    public void parse(File file) throws IOException, IllegalFormatException {
+    public CSVData parse(File file) throws IOException, IllegalFormatException {
 
         this.data = new CSVData();
 
         this.currentState = State.PRE;
         record = new CSVRecord();
-        token = new StringBuilder();
+        field = new StringBuilder();
 
         InputStream in = new FileInputStream(file);
         Reader reader = new BufferedReader(new InputStreamReader(in, Charset.defaultCharset()));
         while (parseNextCharacter(reader.read())) ;
+
+        return data;
     }
 
     private boolean parseNextCharacter(int d) throws IllegalFormatException {
         CSVCharacter nextChar = new CSVCharacter(d);
 
         if (nextChar.isEOF()) {
-            addTokenToRow();
+            addFieldToRow();
             addRowToData();
             data.setHeaders();
             debug("---EOF---");
@@ -62,14 +62,14 @@ public class CSVParser {
                 statePost(nextChar);
                 break;
 
-            case STRING:
-                debug("STRING: " + nextChar);
+            case ESCAPED_FIELD:
+                debug("ESCAPED_FIELD: " + nextChar);
                 stateString(nextChar);
                 break;
 
-            case TOKEN:
-                debug("TOKEN: " + nextChar);
-                stateToken(nextChar);
+            case FIELD:
+                debug("FIELD: " + nextChar);
+                stateField(nextChar);
                 break;
 
             default:
@@ -79,32 +79,32 @@ public class CSVParser {
 
     private void statePre(CSVCharacter nextChar) {
         if (nextChar.isNewLine()) {
-            addTokenToRow();
+            addFieldToRow();
             addRowToData();
             currentState = State.PRE;
             debug("---EOL---");
         } else if (nextChar.isComma()) {
-            addTokenToRow();
+            addFieldToRow();
         } else if (nextChar.isQuote()) {
-            currentState = State.STRING;
+            currentState = State.ESCAPED_FIELD;
         } else {
-            token.append(nextChar);
-            currentState = State.TOKEN;
+            field.append(nextChar);
+            currentState = State.FIELD;
         }
     }
 
     private void statePost(CSVCharacter nextChar) throws IllegalFormatException {
         if (nextChar.isNewLine()) {
-            addTokenToRow();
+            addFieldToRow();
             addRowToData();
             currentState = State.PRE;
             debug("---EOL---");
         } else if (nextChar.isComma()) {
-            addTokenToRow();
+            addFieldToRow();
             currentState = State.PRE;
         } else if (nextChar.isQuote()) {
-            token.append(nextChar);
-            currentState = State.STRING;
+            field.append(nextChar);
+            currentState = State.ESCAPED_FIELD;
         }  else {
             throw new IllegalFormatException(String.format("Expected char ',' or '\"', but found '%s'.", nextChar));
         }
@@ -114,34 +114,34 @@ public class CSVParser {
         if (nextChar.isQuote()) {
             currentState = State.POST;
         } else {
-            token.append(nextChar);
+            field.append(nextChar);
         }
     }
 
-    private void stateToken(CSVCharacter nextChar) throws IllegalFormatException {
+    private void stateField(CSVCharacter nextChar) throws IllegalFormatException {
         if (nextChar.isNewLine()) {
-            addTokenToRow();
+            addFieldToRow();
             addRowToData();
             currentState = State.PRE;
             debug("---EOL---");
         } else if (nextChar.isComma()) {
-            addTokenToRow();
+            addFieldToRow();
             currentState = State.PRE;
         } else if (nextChar.isQuote()) {
             throw new IllegalFormatException(String.format("Expected char but found '%s'.", nextChar));
         }  else {
-            token.append(nextChar);
+            field.append(nextChar);
         }
     }
 
-    private void addTokenToRow() {
-        debug(String.format("Token added: '%s'", token.toString()));
-        record.add(token.toString());
-        token = new StringBuilder();
+    private void addFieldToRow() {
+        debug(String.format("Field added: '%s'", field.toString()));
+        record.add(field.toString());
+        field = new StringBuilder();
     }
 
     private void addRowToData() {
-        debug(String.format("Row added: '%s'", record.toString()));
+        debug(String.format("Row added: '%s'", record.toDebugString()));
         data.add(record);
         record = new CSVRecord();
     }

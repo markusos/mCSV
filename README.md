@@ -6,12 +6,11 @@ mCSV is a simple CSV parser implemented in Java. mCSV parses the CSV format desc
 Example
 ----
 
+Get the value of the column with the header 'name' from row 5 in the file input.csv'
+
 ```
 CSVParser csvParser = new CSVParser();
-csvParser.parse(new File("input.csv"));
-CSVData data = csvParser.getData();
-
-// Get the value of the column with the header 'name' from row 5 in the file input.csv'
+CSVData data = csvParser.parse(new File("input.csv"));
 String value = data.get(5).get("name");
 
 ```
