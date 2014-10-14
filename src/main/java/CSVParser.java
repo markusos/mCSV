@@ -10,12 +10,10 @@ import java.nio.charset.Charset;
 
 public class CSVParser {
 
-    private static final boolean debug = false;
-
     private enum State {PRE, FIELD, ESCAPED_FIELD, POST}
 
     private State currentState;
-    private StringBuilder field;
+    private CSVField field;
     private CSVData data;
     private CSVRecord record;
 
@@ -25,11 +23,17 @@ public class CSVParser {
 
         this.currentState = State.PRE;
         record = new CSVRecord();
-        field = new StringBuilder();
+        field = new CSVField();
 
         InputStream in = new FileInputStream(file);
         Reader reader = new BufferedReader(new InputStreamReader(in, Charset.defaultCharset()));
-        while (parseNextCharacter(reader.read())) ;
+
+        boolean notDone;
+        do {
+            int next = reader.read();
+            notDone = parseNextCharacter(next);
+        } while (notDone);
+        reader.close();
 
         return data;
     }
@@ -41,8 +45,6 @@ public class CSVParser {
             addFieldToRow();
             addRowToData();
             data.setHeaders();
-            debug("---EOF---");
-            debug(data.toString());
             return false;
         } else {
             nextState(nextChar);
@@ -53,22 +55,18 @@ public class CSVParser {
     private void nextState(CSVCharacter nextChar) throws IllegalFormatException {
         switch (currentState) {
             case PRE:
-                debug("PRE: " + nextChar);
                 statePre(nextChar);
                 break;
 
             case POST:
-                debug("POST: " + nextChar);
                 statePost(nextChar);
                 break;
 
             case ESCAPED_FIELD:
-                debug("ESCAPED_FIELD: " + nextChar);
                 stateString(nextChar);
                 break;
 
             case FIELD:
-                debug("FIELD: " + nextChar);
                 stateField(nextChar);
                 break;
 
@@ -82,7 +80,6 @@ public class CSVParser {
             addFieldToRow();
             addRowToData();
             currentState = State.PRE;
-            debug("---EOL---");
         } else if (nextChar.isComma()) {
             addFieldToRow();
         } else if (nextChar.isQuote()) {
@@ -98,14 +95,13 @@ public class CSVParser {
             addFieldToRow();
             addRowToData();
             currentState = State.PRE;
-            debug("---EOL---");
         } else if (nextChar.isComma()) {
             addFieldToRow();
             currentState = State.PRE;
         } else if (nextChar.isQuote()) {
             field.append(nextChar);
             currentState = State.ESCAPED_FIELD;
-        }  else {
+        } else {
             throw new IllegalFormatException(String.format("Expected char ',' or '\"', but found '%s'.", nextChar));
         }
     }
@@ -123,32 +119,23 @@ public class CSVParser {
             addFieldToRow();
             addRowToData();
             currentState = State.PRE;
-            debug("---EOL---");
         } else if (nextChar.isComma()) {
             addFieldToRow();
             currentState = State.PRE;
         } else if (nextChar.isQuote()) {
             throw new IllegalFormatException(String.format("Expected char but found '%s'.", nextChar));
-        }  else {
+        } else {
             field.append(nextChar);
         }
     }
 
     private void addFieldToRow() {
-        debug(String.format("Field added: '%s'", field.toString()));
         record.add(field.toString());
-        field = new StringBuilder();
+        field = new CSVField();
     }
 
     private void addRowToData() {
-        debug(String.format("Row added: '%s'", record.toDebugString()));
         data.add(record);
         record = new CSVRecord();
-    }
-
-    private void debug(String s) {
-        if (debug) {
-            System.out.println(s);
-        }
     }
 }

@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -9,7 +10,7 @@ public class CSVData implements Iterable<CSVRecord> {
     private final List<CSVRecord> data;
 
     public CSVData() {
-        data = new LinkedList<CSVRecord>();
+        data = new ArrayList<CSVRecord>();
     }
 
     @Override
@@ -50,14 +51,14 @@ public class CSVData implements Iterable<CSVRecord> {
 
         CSVData that = (CSVData) o;
 
-        if (data != null ? !data.equals(that.data) : that.data != null) return false;
+        if (!data.equals(that.data)) return false;
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        return data != null ? data.hashCode() : 0;
+        return data.hashCode();
     }
 
     @Override

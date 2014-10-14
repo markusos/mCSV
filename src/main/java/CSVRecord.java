@@ -18,7 +18,7 @@ public class CSVRecord implements Iterable<String>{
 
     public String get(String key) {
         if (headers != null && headers.containsKey(key)) {
-            return fields.get(headers.get(key));
+            return this.get(headers.get(key));
         }
         else {
             return null;
@@ -26,7 +26,7 @@ public class CSVRecord implements Iterable<String>{
     }
 
     public String get(int i) {
-        return fields.get(i);
+        return fields.get(i).toString();
     }
 
     public boolean add(String value) {
@@ -67,11 +67,11 @@ public class CSVRecord implements Iterable<String>{
         StringBuilder stringBuilder = new StringBuilder();
 
         for (int i = 0; i < fields.size(); i++) {
-            if (fields.get(i).contains("\"") || fields.get(i).contains("\n") || fields.get(i).contains(",")) {
-                stringBuilder.append("\"").append(fields.get(i).replaceAll("\"","\"\"" )).append("\"");
+            if (this.get(i).contains("\"") || this.get(i).contains("\n") || this.get(i).contains(",")) {
+                stringBuilder.append("\"").append(this.get(i).replaceAll("\"","\"\"" )).append("\"");
             }
             else {
-                stringBuilder.append(fields.get(i));
+                stringBuilder.append(this.get(i));
             }
 
             if (i != fields.size() -1) {

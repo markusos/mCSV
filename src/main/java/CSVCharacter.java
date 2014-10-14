@@ -21,20 +21,24 @@ class CSVCharacter {
         this.c = (char) c;
     }
 
-    public boolean isEOF() {
+    boolean isEOF() {
         return state.equals(State.EOF);
     }
 
-    public boolean isNewLine() {
+    boolean isNewLine() {
         return c == NEW_LINE;
     }
 
-    public boolean isComma() {
+    boolean isComma() {
         return c == COMMA;
     }
 
-    public boolean isQuote() {
+    boolean isQuote() {
         return c == DQUOTE;
+    }
+
+    char getChar() {
+        return c;
     }
 
     @Override
