@@ -12,8 +12,8 @@ public class CSVParserTest {
     @org.junit.Test
     public void testBasicParse() throws Exception {
         assertNotNull("Test file missing", getClass().getResource("/testBasic.csv"));
-        csvParser = new CSVParser();
-        data = csvParser.parse(new File(getClass().getResource("/testBasic.csv").getFile()));
+        csvParser = new CSVParser(new File(getClass().getResource("/testBasic.csv").getFile()));
+        data = csvParser.parse();
 
         CSVRecord expected;
         CSVRecord actual;
@@ -53,7 +53,8 @@ public class CSVParserTest {
         assertEquals(expected, actual);
 
         assertNotNull("Test file missing", getClass().getResource("/testWikipediaExample.csv"));
-        data = csvParser.parse(new File(getClass().getResource("/testWikipediaExample.csv").getFile()));
+        csvParser = new CSVParser(new File(getClass().getResource("/testWikipediaExample.csv").getFile()));
+        data = csvParser.parse();
 
         expected = new CSVRecord(Arrays.asList("Year", "Make", "Model", "Description", "Price"));
         actual = data.get(0);
@@ -79,8 +80,8 @@ public class CSVParserTest {
     @org.junit.Test
     public void testGet() throws Exception {
         assertNotNull("Test file missing", getClass().getResource("/testWikipediaExample.csv"));
-        csvParser = new CSVParser();
-        data = csvParser.parse(new File(getClass().getResource("/testWikipediaExample.csv").getFile()));
+        csvParser = new CSVParser(new File(getClass().getResource("/testWikipediaExample.csv").getFile()));
+        data = csvParser.parse();
 
         CSVRecord expected;
         CSVRecord actual;

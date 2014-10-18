@@ -5,12 +5,11 @@ import static org.junit.Assert.assertEquals;
 public class CSVPerformanceTest {
 
     CSVParser csvParser;
-    CSVData data;
 
     @org.junit.Test
     public void testPerformance() throws Exception {
-        csvParser = new CSVParser();
         File testFile = new File("output/testOutput.csv");
+        csvParser = new CSVParser(testFile);
 
         // Create test data
         CSVData testData = new CSVData();
@@ -32,10 +31,25 @@ public class CSVPerformanceTest {
 
         System.out.println("Data exported");
 
-        data = csvParser.parse(testFile);
+        long start = System.nanoTime();
+
+        CSVField field = new CSVField();
+
+        // Parse the generated file and save the last parsed field to validate result
+        while (true) {
+            CSVField tmpField = csvParser.parseNextField();
+            if (tmpField != null) {
+                field = tmpField;
+            } else {
+                break;
+            }
+        }
+
+        long elapsedNanos = System.nanoTime() - start;
+
+        System.out.println("Time elapsed: " + elapsedNanos + " ns");
         System.out.println("Data parsed");
-        //assertEquals(testData, data);
-        System.out.println();
-        assertEquals(data.get(nrOfRecords).get(nrOfFields), nrOfRecords + "abcdefghijklmnopqrstuvxyz" + nrOfFields);
+
+        assertEquals(nrOfRecords + "abcdefghijklmnopqrstuvxyz" + nrOfFields, field.toString());
     }
 }

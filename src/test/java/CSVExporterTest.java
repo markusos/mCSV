@@ -8,12 +8,12 @@ public class CSVExporterTest {
     public void testBasicExport() throws Exception {
 
         File outFile = new File("output/testOutput.csv");
-        CSVData expectedData = new CSVParser().parse(new File(getClass().getResource("/testBasic.csv").getFile()));
+        CSVData expectedData = new CSVParser(new File(getClass().getResource("/testBasic.csv").getFile())).parse();
 
         CSVExporter exporter = new CSVExporter();
         exporter.export(outFile, expectedData);
 
-        CSVData parsedData = new CSVParser().parse(outFile);
+        CSVData parsedData = new CSVParser(outFile).parse();
 
         assertEquals(expectedData.get(0), parsedData.get(0));
         assertEquals(expectedData.get(1), parsedData.get(1));
